@@ -2,6 +2,8 @@ use super::record_id::RecordId;
 use super::tuple_desc::TupleDesc;
 use crate::common::field::Field;
 use crate::downcast;
+use std::cmp::Ordering;
+use std::fmt;
 use std::slice::Iter;
 
 /**
@@ -41,12 +43,10 @@ impl Tuple {
     // }
 
     pub fn set_field(&mut self, i: usize, field: Box<dyn Field>) {
-        if i > self.fields.len() {
-            return;
-        } else if i == self.fields.len() {
-            self.fields.push(field);
-        } else {
-            self.fields[i] = field;
+        match i.cmp(&self.fields.len()) {
+            Ordering::Equal => self.fields.push(field),
+            Ordering::Greater => (),
+            Ordering::Less => self.fields[i] = field,
         }
     }
 
@@ -54,12 +54,14 @@ impl Tuple {
         self.fields.get(i)
     }
 
-    pub fn to_string(&self) -> String {
-        "".to_string()
-    }
-
     pub fn get_fields(&self) -> Iter<'_, Box<dyn Field>> {
         self.fields.iter()
+    }
+}
+
+impl fmt::Display for Tuple {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "")
     }
 }
 

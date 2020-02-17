@@ -46,7 +46,7 @@ impl Field for StringField {
         output.write_all(s.as_bytes())?;
         if overflow > 0 {
             let zeros: Vec<u8> = vec![0; overflow as usize];
-            output.write(&zeros)?;
+            output.write_all(&zeros)?;
         }
         Ok(())
     }

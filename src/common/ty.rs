@@ -1,5 +1,6 @@
 use super::int_field::IntField;
 use super::string_field::StringField;
+use std::fmt;
 
 const STRING_LEN: i32 = 128;
 
@@ -20,19 +21,22 @@ impl Type {
         }
     }
 
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::Int => String::from("Int"),
-            Self::Str => String::from("Str"),
-        }
-    }
-
     pub fn parse_int() -> Result<IntField, &'static str> {
         Err("not implemented error")
     }
 
     pub fn parse_str() -> Result<StringField, &'static str> {
         Err("not implemented error")
+    }
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let output = match self {
+            Self::Int => String::from("Int"),
+            Self::Str => String::from("Str"),
+        };
+        write!(f, "{}", output)
     }
 }
 

@@ -2,6 +2,7 @@ use super::field::Field;
 use super::int_field::IntField;
 use super::string_field::StringField;
 use crate::table::tuple::Tuple;
+use std::fmt;
 
 /**
  * Predicate compares tuples to a specified Field value.
@@ -94,16 +95,19 @@ impl Op {
             _ => None,
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::Equals => String::from("="),
-            Self::GreaterThan => String::from(">"),
-            Self::LessThan => String::from("<"),
-            Self::LessThanOrEq => String::from("<="),
-            Self::GreaterThanOrEq => String::from(">="),
-            Self::Like => String::from("LIKE"),
-            Self::NotEquals => String::from("<>"),
-        }
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let output = match self {
+            Self::Equals => "=",
+            Self::GreaterThan => ">",
+            Self::LessThan => "<",
+            Self::LessThanOrEq => "<=",
+            Self::GreaterThanOrEq => ">=",
+            Self::Like => "LIKE",
+            Self::NotEquals => "<>",
+        };
+        write!(f, "{}", output)
     }
 }

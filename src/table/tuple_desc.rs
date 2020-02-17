@@ -1,4 +1,5 @@
 use crate::common::ty::Type;
+use std::fmt;
 use std::slice::Iter;
 
 #[derive(PartialEq, Debug, Clone)]
@@ -14,9 +15,11 @@ impl TDItem {
             field_name: n,
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        format!("{}({})", self.field_name, self.field_type.to_string())
+impl fmt::Display for TDItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}({})", self.field_name, self.field_type.to_string())
     }
 }
 
@@ -87,40 +90,35 @@ impl TupleDesc {
     }
 
     pub fn get_size(&self) -> i32 {
-        let mut size = 0;
-        for item in self.items.iter() {
-            size += item.field_type.len()
-        }
-        size
+        self.items.iter().map(|item| item.field_type.len()).sum()
     }
 
     /**
      * Merge two TupleDescs into one, with td1.numFields + td2.numFields fields,
      * with the first td1.numFields coming from td1 and the remaining from td2.
      */
-    pub fn merge(td1: &TupleDesc, td2: &TupleDesc) -> Self {
+    pub fn merge(td1: TupleDesc, td2: TupleDesc) -> Self {
         Self {
-            items: td1
-                .iterator()
-                .cloned()
-                .chain(td2.iterator().cloned())
-                .collect(),
+            items: td1.items.into_iter().chain(td2.items).collect(),
         }
     }
+}
 
+impl fmt::Display for TupleDesc {
     /**
      * Returns a String describing this descriptor. It should be of the form
      * "fieldType[0] (fieldName[0]), ..., fieldType[M] (fieldName[M])", although
      * the exact format does not matter.
      */
-    pub fn to_string(&self) -> String {
-        "".to_string()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "")
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+
     #[test]
     fn test_to_string() {
         let item = TDItem::new(Type::Int, "Age".to_string());
@@ -196,28 +194,36 @@ mod test {
         let str2 = get_string(2, "td2");
         let td1 = TupleDesc::new(get_type(1), str1.iter().map(|n| n.as_str()).collect());
         let td2 = TupleDesc::new(get_type(2), str2.iter().map(|n| n.as_str()).collect());
-        let td3 = TupleDesc::merge(&td1, &td2);
+        let td3 = TupleDesc::merge(td1, td2);
         assert_eq!(3, td3.num_fields());
         assert_eq!(3 * Type::Int.len(), td3.get_size());
         for i in 0..3 {
             assert_eq!(Some(Type::Int), td3.get_field_type(i));
         }
+
+        let td1 = TupleDesc::new(get_type(1), str1.iter().map(|n| n.as_str()).collect());
+        let td2 = TupleDesc::new(get_type(2), str2.iter().map(|n| n.as_str()).collect());
         assert_eq!(combined_strings(&td1, &td2, td3), true);
 
-        let td3 = TupleDesc::merge(&td2, &td1);
+        let td3 = TupleDesc::merge(td2, td1);
         assert_eq!(3, td3.num_fields());
         assert_eq!(3 * Type::Int.len(), td3.get_size());
         for i in 0..3 {
             assert_eq!(Some(Type::Int), td3.get_field_type(i));
         }
+
+        let td1 = TupleDesc::new(get_type(1), str1.iter().map(|n| n.as_str()).collect());
+        let td2 = TupleDesc::new(get_type(2), str2.iter().map(|n| n.as_str()).collect());
+        let td2_clone = TupleDesc::new(get_type(2), str2.iter().map(|n| n.as_str()).collect());
         assert_eq!(combined_strings(&td2, &td1, td3), true);
 
-        let td3 = TupleDesc::merge(&td2, &td2);
+        let td3 = TupleDesc::merge(td2, td2_clone);
         assert_eq!(4, td3.num_fields());
         assert_eq!(4 * Type::Int.len(), td3.get_size());
         for i in 0..4 {
             assert_eq!(Some(Type::Int), td3.get_field_type(i));
         }
+        let td2 = TupleDesc::new(get_type(2), str2.iter().map(|n| n.as_str()).collect());
         assert_eq!(combined_strings(&td2, &td2, td3), true);
     }
 
@@ -282,14 +288,14 @@ mod test {
         let single_int2 = TupleDesc::default_new(vec![Type::Int]);
         let int_string = TupleDesc::default_new(vec![Type::Int, Type::Str]);
 
-        assert_eq!(true, single_int == single_int);
-        assert_eq!(true, single_int == single_int2);
-        assert_eq!(true, single_int2 == single_int);
-        assert_eq!(true, int_string == int_string);
+        assert_eq!(single_int, single_int);
+        assert_eq!(single_int, single_int2);
+        assert_eq!(single_int2, single_int);
+        assert_eq!(int_string, int_string);
 
-        assert_eq!(false, single_int == int_string);
-        assert_eq!(false, single_int2 == int_string);
-        assert_eq!(false, int_string == single_int);
-        assert_eq!(false, int_string == single_int2);
+        assert_ne!(single_int, int_string);
+        assert_ne!(single_int2, int_string);
+        assert_ne!(int_string, single_int);
+        assert_ne!(int_string, single_int2);
     }
 }
